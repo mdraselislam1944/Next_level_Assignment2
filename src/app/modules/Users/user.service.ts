@@ -17,20 +17,50 @@ const getSingleUserFromDB = async (userId: string) => {
 
 const deleteUserFromDB = async (userId: string) => {
 
-    const result = await User.findOneAndDelete({ userId});
+    const result = await User.findOneAndDelete({ userId });
     return result;
 };
 
 const updateUserFromDB = async (userId: string, data: any) => {
-    const result = await User.findOneAndUpdate({userId:userId}, { $set: data }, { new: true });
+    const result = await User.findOneAndUpdate({ userId: userId }, { $set: data }, { new: true });
     return result;
 };
 
+const addProduct = async (userId: string, product: any) => {
+    const user = await User.findOne({ userId });
+    if (!user) {
+        return null;
+    }
+    user.orders.push(product);
+    const result = await user.save();
+    return result;
+}
+
+const AllGetProduct=async(userId: string)=>{
+    const user = await User.findOne({ userId }).select({ 'orders._id': 0 });
+    if (!user) {
+        return null;
+    }
+    return user.orders;
+}
+
+const sumOfAllProduct=async(userId: string)=>{
+    const productSum=await User.aggregate([
+        {$match:{userId:userId}},
+        {$unwind:"$orders"},
+        {$group:{_id:null,totalAmount:{$sum:"$orders.price"}}}
+    ])
+    console.log(productSum)
+    return productSum;
+}
 
 export const userService = {
     createUserIntoDB,
     showAllUsers,
     getSingleUserFromDB,
     deleteUserFromDB,
-    updateUserFromDB
+    updateUserFromDB,
+    addProduct,
+    AllGetProduct,
+    sumOfAllProduct
 };
