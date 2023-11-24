@@ -45,12 +45,20 @@ const AllGetProduct=async(userId: string)=>{
 }
 
 const sumOfAllProduct=async(userId: string)=>{
-    const productSum=await User.aggregate([
-        {$match:{userId:userId}},
-        {$unwind:"$orders"},
-        {$group:{_id:null,totalAmount:{$sum:"$orders.price"}}}
-    ])
-    console.log(productSum)
+    const user = await User.findOne({ userId:userId }).select({_id:1});
+    if (!user) {
+        return null;
+    }
+    const productSum = await User.aggregate([
+        { $match: { _id: user?._id} },
+        { $unwind: "$orders" },
+        {
+            $group: {
+                _id: null,
+                totalAmount: { $sum: "$orders.price" },
+            },
+        },
+    ]);
     return productSum;
 }
 
