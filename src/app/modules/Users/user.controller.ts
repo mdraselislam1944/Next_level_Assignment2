@@ -1,15 +1,31 @@
 import { Request, Response } from "express";
 import { userService } from "./user.service";
+import bcrypt from 'bcrypt';
+import config from "../../config";
 
 const createUser = async (req: Request, res: Response) => {
+    const user = req.body;
     try {
-        const user = req.body;
-        const result = await userService.createUserIntoDB(user);
-        res.status(201).json({ status: true, message: "user is created", data: result })
+        const saltRounds = parseInt(config.bcrypt_salt_rounds || '10', 10); 
+        if (isNaN(saltRounds)) {
+            throw new Error('Invalid salt rounds configuration');
+        }
+
+        bcrypt.hash(user.password, saltRounds, async function (err, hash) {
+            if (err) {
+                throw err;
+            }
+
+            const result = await userService.createUserIntoDB({ ...user, password: hash });
+            res.status(201).json({ status: true, message: "user is created", data: result });
+        });
     } catch (error: any) {
-        res.status(500).json({ status: false, message: "user is not created", data: error.message })
+        res.status(500).json({ status: false, message: "user is not created", data: error.message });
     }
 }
+
+
+
 const getUsers = async (req: Request, res: Response) => {
     try {
         const result = await userService.showAllUsers();

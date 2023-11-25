@@ -8,14 +8,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userController = void 0;
 const user_service_1 = require("./user.service");
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const config_1 = __importDefault(require("../../config"));
 const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = req.body;
     try {
-        const user = req.body;
-        const result = yield user_service_1.userService.createUserIntoDB(user);
-        res.status(201).json({ status: true, message: "user is created", data: result });
+        const saltRounds = parseInt(config_1.default.bcrypt_salt_rounds || '10', 10);
+        if (isNaN(saltRounds)) {
+            throw new Error('Invalid salt rounds configuration');
+        }
+        bcrypt_1.default.hash(user.password, saltRounds, function (err, hash) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (err) {
+                    throw err;
+                }
+                const result = yield user_service_1.userService.createUserIntoDB(Object.assign(Object.assign({}, user), { password: hash }));
+                res.status(201).json({ status: true, message: "user is created", data: result });
+            });
+        });
     }
     catch (error) {
         res.status(500).json({ status: false, message: "user is not created", data: error.message });
