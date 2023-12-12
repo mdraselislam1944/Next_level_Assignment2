@@ -57,7 +57,7 @@ const sumOfAllProduct = (userId) => __awaiter(void 0, void 0, void 0, function* 
         { $unwind: "$orders" },
         {
             $group: {
-                _id: null,
+                _id: 0,
                 totalAmount: { $sum: "$orders.price" },
             },
         },

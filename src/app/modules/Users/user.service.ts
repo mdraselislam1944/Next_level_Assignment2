@@ -55,7 +55,7 @@ const sumOfAllProduct=async(userId: string)=>{
         { $unwind: "$orders" },
         {
             $group: {
-                _id: null,
+                _id: 0,
                 totalAmount: { $sum: "$orders.price" },
             },
         },

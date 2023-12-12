@@ -1,5 +1,3 @@
-// import {Model} from "mongoose";
-
 
 export type tUserInformation={
     userId: number;
@@ -24,7 +22,3 @@ export type tUserInformation={
       quantity: number;
     }[];   
 }
-
-// export interface UserModel extends Model<tUserInformation>{
-//     isUserExists(id: string): Promise<tUserInformation | null>;
-//   }

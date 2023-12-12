@@ -16,9 +16,12 @@ exports.userController = void 0;
 const user_service_1 = require("./user.service");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const config_1 = __importDefault(require("../../config"));
+const user_validation_1 = __importDefault(require("./user.validation"));
 const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = req.body;
     try {
+        const data = req.body;
+        // Ensure that the "orders" field is present, or set it to an empty array
+        const user = user_validation_1.default.parse(Object.assign(Object.assign({}, data), { orders: data.orders || [] }));
         const saltRounds = parseInt(config_1.default.bcrypt_salt_rounds || '10', 10);
         if (isNaN(saltRounds)) {
             throw new Error('Invalid salt rounds configuration');
@@ -29,17 +32,25 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     throw err;
                 }
                 const result = yield user_service_1.userService.createUserIntoDB(Object.assign(Object.assign({}, user), { password: hash }));
-                res.status(201).json({ status: true, message: "user is created", data: result });
+                res.status(201).json({ status: true, message: "User is created", data: result });
             });
         });
     }
     catch (error) {
-        res.status(500).json({ status: false, message: "user is not created", data: error.message });
+        res.status(500).json({ status: false, message: "User is not created", data: error.message });
     }
 });
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield user_service_1.userService.showAllUsers();
+        if (!result) {
+            res.status(200).json({
+                success: true,
+                message: 'users can not found',
+                data: result,
+            });
+            return;
+        }
         res.status(200).json({
             success: true,
             message: 'Students are retrieved succesfully',
@@ -58,6 +69,14 @@ const getSingleUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const { userId } = req.params;
         const result = yield user_service_1.userService.getSingleUserFromDB(userId);
+        if (!result) {
+            res.status(200).json({
+                success: true,
+                message: 'user can not found',
+                data: result,
+            });
+            return;
+        }
         res.status(200).json({
             success: true,
             message: 'Student is retrieved succesfully',
@@ -76,10 +95,18 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     try {
         const { userId } = req.params;
         const result = yield user_service_1.userService.deleteUserFromDB(userId);
+        if (!result) {
+            res.status(200).json({
+                success: true,
+                message: 'user can not found',
+                data: result,
+            });
+            return;
+        }
         res.status(200).json({
             success: true,
             message: 'Student is deleted succesfully',
-            data: result,
+            data: null,
         });
     }
     catch (err) {
@@ -95,6 +122,14 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const { userId } = req.params;
         const data = req.body;
         const result = yield user_service_1.userService.updateUserFromDB(userId, data);
+        if (!result) {
+            res.status(200).json({
+                success: true,
+                message: 'user can not found',
+                data: result,
+            });
+            return;
+        }
         res.status(200).json({
             success: true,
             message: 'user is updated succesfully',
@@ -110,28 +145,39 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 const AddProductUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.params;
+    const product = req.body;
     try {
-        const { userId } = req.params;
-        const product = req.body;
-        const result = yield user_service_1.userService.addProduct(userId, product);
-        if (!result) {
-            res.status(200).json({
-                success: true,
-                message: 'user can not found',
-                data: result,
+        // Check if req.body is empty
+        if (!product) {
+            res.status(400).json({
+                success: false,
+                message: 'Request body is empty',
+                error: null,
             });
             return;
         }
+        const result = yield user_service_1.userService.addProduct(userId, product);
+        if (!result) {
+            res.status(404).json({
+                success: false,
+                message: 'User not found',
+                data: null,
+            });
+            return;
+        }
+        // Move the console.log here or remove it
+        console.log("hello world");
         res.status(200).json({
             success: true,
-            message: "Order created successfully!",
+            message: 'Order created successfully!',
             data: null,
         });
     }
     catch (err) {
         res.status(500).json({
             success: false,
-            message: err.message || 'something went wrong',
+            message: err.message || 'Something went wrong',
             error: err,
         });
     }
